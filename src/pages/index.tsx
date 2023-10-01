@@ -1,7 +1,5 @@
 import { HomeContainer, Product } from '@/styles/pages/home'
-import Head from 'next/head'
 import Image from 'next/image'
-import Link from 'next/link'
 import { NextSeo } from 'next-seo'
 
 import { useKeenSlider } from 'keen-slider/react'
@@ -10,12 +8,26 @@ import 'keen-slider/keen-slider.min.css'
 import { stripe } from '@/lib/stripe'
 import { GetStaticProps } from 'next'
 import Stripe from 'stripe'
+import { ShoppingBag } from 'phosphor-react'
+import { useContext } from 'react'
+import { ShoppingContext } from '@/context/context'
+import Link from 'next/link'
+import { handleAddShoppingBag } from '@/utils/shoppingAdd'
+import { formatPrice } from '@/utils/formatPrice'
 
 interface HomeProps {
-  products: Array<{ id: string; name: string; imageUrl: string; price: string }>
+  products: Array<{
+    id: string
+    name: string
+    imageUrl: string
+    price: number
+    quantity: number
+  }>
 }
 
 export default function Home({ products }: HomeProps) {
+  const shopping = useContext(ShoppingContext)
+
   const [sliderRef] = useKeenSlider({
     slides: {
       perView: 2.5,
@@ -29,13 +41,10 @@ export default function Home({ products }: HomeProps) {
         title="Ignite Shop"
         description="Todos os produtos da Ignite Shop"
       />
+
       <HomeContainer ref={sliderRef} className="keen-slider">
         {products.map((product) => (
-          <Link
-            key={product.id}
-            href={`/product/${product.id}`}
-            prefetch={false}
-          >
+          <Link href={`/product/${product.id}`} key={product.id}>
             <Product className="keen-slider__slide">
               <Image
                 src={product.imageUrl}
@@ -46,10 +55,19 @@ export default function Home({ products }: HomeProps) {
                 alt={''}
               />
               <footer>
-                <strong>{product.name}</strong>
-                <span>{product.price}</span>
+                <div>
+                  <strong>{product.name}</strong>
+                  <br />
+                  <span>{formatPrice(product.price)}</span>
+                </div>
+                <ShoppingBag
+                  onClick={(e) => {
+                    e.preventDefault()
+                    shopping && handleAddShoppingBag(product, shopping)
+                  }}
+                />
               </footer>
-            </Product>
+            </Product>{' '}
           </Link>
         ))}
       </HomeContainer>
@@ -66,16 +84,11 @@ export const getStaticProps: GetStaticProps = async () => {
     const price = product.default_price as Stripe.Price | null
 
     if (price && typeof price.unit_amount === 'number') {
-      const formattedPrice = new Intl.NumberFormat('pt-BR', {
-        style: 'currency',
-        currency: 'BRL',
-      }).format(price.unit_amount / 100)
-
       return {
         id: product.id,
         name: product.name,
         imageUrl: product.images[0],
-        price: formattedPrice,
+        price: price.unit_amount,
       }
     } else {
       return {
