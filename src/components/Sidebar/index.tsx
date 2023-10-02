@@ -11,8 +11,9 @@ import { X } from 'phosphor-react'
 import { ShoppingContext } from '@/context/context'
 import Image from 'next/image'
 import { formatPrice } from '@/utils/formatPrice'
+import { handleRemoveItem } from '@/utils/shoppingRemove'
 
-interface ProductProps {
+export interface ProductProps {
   product: {
     id: string
     name: string
@@ -35,12 +36,15 @@ export function Sidebar({ open, setOpen }: any) {
   }
 
   useEffect(() => {
+    setItem(0)
+    setValue(0)
     if (shopping?.products && shopping?.products[0]?.price) {
-      setItem(0)
       shopping?.products.forEach((product) => {
         setItem((prevItem) => prevItem + product.quantity)
         if (product.price !== null) {
-          setValue((current) => current + (product.price || 0))
+          setValue(
+            (current) => current + (product.price * product.quantity || 0),
+          )
         }
       })
     }
@@ -56,6 +60,7 @@ export function Sidebar({ open, setOpen }: any) {
         shopping: shopping?.products,
       })
       const { checkoutUrl } = response.data
+      console.log(checkoutUrl)
 
       window.location.href = checkoutUrl
     } catch (error) {
@@ -86,7 +91,9 @@ export function Sidebar({ open, setOpen }: any) {
                   <h2>{product.name}</h2>
                   <span>{formatPrice(product.price)}</span>
                   {`${product.quantity}x`}
-                  <button>Remover</button>
+                  <button onClick={() => handleRemoveItem(shopping, product)}>
+                    Remover
+                  </button>
                 </div>
               </ProductShoppingContainer>
             )

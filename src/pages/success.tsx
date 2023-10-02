@@ -1,5 +1,9 @@
 import { stripe } from '@/lib/stripe'
-import { SuccessContainer, ImageContainer } from '@/styles/pages/success'
+import {
+  SuccessContainer,
+  ImageContainer,
+  ImageContainerBox,
+} from '@/styles/pages/success'
 import { GetServerSideProps } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -7,19 +11,21 @@ import Stripe from 'stripe'
 import { NextSeo } from 'next-seo'
 import Head from 'next/head'
 
+interface ProductInterface {
+  name: string
+  imageUrl: string
+}
+
 interface SuccessProps {
   customerName: string
-  product: {
-    name: string
-    imageUrl: string
-  }
+  product: ProductInterface[]
 }
 
 export default function Success({ customerName, product }: SuccessProps) {
   return (
     <>
       <NextSeo
-        title={product.name}
+        title="Compra finalizada"
         description="Compra realizada com sucesso!"
       />
       <Head>
@@ -27,12 +33,20 @@ export default function Success({ customerName, product }: SuccessProps) {
       </Head>
       <SuccessContainer>
         <h1>Compra efetuada</h1>
-        <ImageContainer>
-          <Image src={product.imageUrl} width={120} height={110} alt="" />
-        </ImageContainer>
+        <ImageContainerBox>
+          {product.map((product) => {
+            return (
+              <ImageContainer key={product.imageUrl}>
+                <Image src={product.imageUrl} width={120} height={110} alt="" />{' '}
+              </ImageContainer>
+            )
+          })}
+        </ImageContainerBox>
         <p>
-          Uhuul <strong>{customerName}</strong>, sua{' '}
-          <strong>{product.name}</strong> já está a caminho da sua casa.
+          Uhuul <strong>{customerName}</strong>, sua comprar de{' '}
+          <strong>{product.length}</strong>{' '}
+          {product.length > 1 ? 'camiseta' : 'camisetas'} já está a caminho da
+          sua casa.
         </p>
 
         <Link href="/">Voltar ao catálago</Link>
@@ -69,15 +83,23 @@ export const getServerSideProps: GetServerSideProps = async ({ query }) => {
     }
 
     // Access the product information from the first line item
-    const product = lineItems[0].price?.product as Stripe.Product
+
+    const products = lineItems.map((product) => {
+      return product.price?.product as Stripe.Product
+    })
+
+    const newProducts = products.reduce((accumulator: any[], currentValue) => {
+      accumulator.push({
+        name: currentValue.name,
+        imageUrl: currentValue.images[0],
+      })
+      return accumulator
+    }, [])
 
     return {
       props: {
         customerName,
-        product: {
-          name: product?.name || 'Nome do Produto Indisponível',
-          imageUrl: product?.images[0] || '',
-        },
+        product: newProducts,
       },
     }
   } catch (error) {

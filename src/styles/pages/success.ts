@@ -34,14 +34,24 @@ export const SuccessContainer = styled('main', {
     },
   },
 })
+
+export const ImageContainerBox = styled('div', {
+  width: 'auto',
+  display: 'flex',
+})
+
 export const ImageContainer = styled('div', {
-  width: '100%',
-  maxWidth: 130,
+  width: 145,
   height: 145,
   background: 'linear-gradient(180deg, #1ea483 0%, #7465d4 100%)',
-  borderRadius: 8,
+  borderRadius: 100,
   padding: '0.25rem',
   marginTop: '4rem',
+
+  '&:not(:first-child)': {
+    marginLeft: '-45px',
+    boxShadow: '-8px 10px 5px 0px rgba(0,0,0,0.52)',
+  },
 
   display: 'flex',
   alignItems: 'center',
